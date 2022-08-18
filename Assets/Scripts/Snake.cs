@@ -153,18 +153,18 @@ public class Snake : MonoBehaviour
     {
         // Generate random positions for the food until one doesn't collide with the snake
         Vector3 position;
-        bool collisioned = false;
+        bool didCollided = false;
         do
         {
             position = generateRandomPositionWithinMap();
 
             foreach (GameObject tailFragment in tail)
             {
-                collisioned = position.Equals(tailFragment.transform.position);
-                if (collisioned) break;
+                didCollided = position.Equals(tailFragment.transform.position);
+                if (didCollided) break;
             }
 
-        } while (collisioned);
+        } while (didCollided);
 
 
         // Config food
@@ -192,21 +192,21 @@ public class Snake : MonoBehaviour
 
         Vector3 snakePosition = head.transform.position;
 
-        bool didCollision = snakePosition.x == leftEdge || snakePosition.x == rightEdge || snakePosition.y == bottomEdge || snakePosition.y == topEdge;
-        return didCollision;
+        bool didCollided = snakePosition.x == leftEdge || snakePosition.x == rightEdge || snakePosition.y == bottomEdge || snakePosition.y == topEdge;
+        return didCollided;
     }
 
     private bool DidSnakeCollidedItself()
     {
-        bool collided = false;
+        bool didCollided = false;
 
         foreach (GameObject tailFragment in tail)
         {
-            collided = tailFragment.transform.position.Equals(head.transform.position);
-            if (collided) break;
+            didCollided = tailFragment.transform.position.Equals(head.transform.position);
+            if (didCollided) break;
         }
 
-        return collided;
+        return didCollided;
     }
 
     private bool DidSnakeAte()
