@@ -19,17 +19,27 @@ public class Snake : MonoBehaviour
 
     private float frameRate = 0.5f;
 
+    private int score = 0;
     private Vector3 direction;
     private GameObject head;
     private List<GameObject> tail;
     private GameObject food;
 
+    private Dictionary<KeyCode, Vector3> directionDictionary = new Dictionary<KeyCode, Vector3>
+    {
+        [KeyCode.LeftArrow] = Vector3.left,
+        [KeyCode.RightArrow] = Vector3.right,
+        [KeyCode.UpArrow] = Vector3.up,
+        [KeyCode.DownArrow] = Vector3.down,
+    };
+
     // Start is called before the first frame update
     void Start()
     {
-        direction = new Vector3(0, 1, 0);
-        CreateMap();
-        CreateSnake();
+        // Set snake initial direction
+        direction = Vector3.up;
+        GenerateMap();
+        GenerateSnake();
         GenerateFood();
         InvokeRepeating("MoveSnake", frameRate, frameRate);
     }
@@ -37,13 +47,15 @@ public class Snake : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (DidSnakeEdgeCollided())
+        bool isGameOver = DidSnakeCollidedEdge() || DidSnakeCollidedItself();
+        if (isGameOver)
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
 
         if (DidSnakeAte())
         {
+            score++;
             Destroy(food);
             GenerateFood();
             GenerateTailFragment();
@@ -69,7 +81,7 @@ public class Snake : MonoBehaviour
         }
     }
 
-    private void CreateMap()
+    private void GenerateMap()
     {
         for (int x = 0; x <= xSize; x++)
         {
@@ -100,7 +112,7 @@ public class Snake : MonoBehaviour
         }
     }
 
-    private void CreateSnake()
+    private void GenerateSnake()
     {
         // Config head
         head = Instantiate(headPrefab);
@@ -114,17 +126,39 @@ public class Snake : MonoBehaviour
 
     private void GenerateFood()
     {
+        // Generate random positions for the food until one doesn't collide with the snake
+        Vector3 newPosition;
+        bool collisioned = false;
+        do
+        {
+            newPosition = generateRandomPositionWithinMap();
+
+            foreach (GameObject tailFragment in tail)
+            {
+                collisioned = newPosition.Equals(tailFragment.transform.position);
+                if (collisioned) break;
+            }
+
+        } while (collisioned);
+
+
+        // Config food
+        food = Instantiate(foodPrefab);
+        food.transform.position = newPosition;
+        SetMaterial(food, foodMaterial);
+    }
+
+    private Vector3 generateRandomPositionWithinMap()
+    {
         System.Random random = new System.Random();
         int x = random.Next(((xSize / 2) - 1) * -1, (xSize / 2 - 1));
         int y = random.Next(((ySize / 2) - 1) * -1, (ySize / 2 - 1));
 
-        // Config food
-        food = Instantiate(foodPrefab);
-        SetMaterial(food, foodMaterial);
-        PlaceGameObject(food, x, y);
+        Vector3 position = new Vector3(x, y, 0);
+        return position;
     }
 
-    private bool DidSnakeEdgeCollided()
+    private bool DidSnakeCollidedEdge()
     {
         int leftEdge = (xSize / 2) * -1;
         int rightEdge = xSize / 2;
@@ -135,6 +169,19 @@ public class Snake : MonoBehaviour
 
         bool didCollision = snakePosition.x == leftEdge || snakePosition.x == rightEdge || snakePosition.y == bottomEdge || snakePosition.y == topEdge;
         return didCollision;
+    }
+
+    private bool DidSnakeCollidedItself()
+    {
+        bool collided = false;
+
+        foreach (GameObject tailFragment in tail)
+        {
+            collided = tailFragment.transform.position.Equals(head.transform.position);
+            if (collided) break;
+        }
+
+        return collided;
     }
 
     private bool DidSnakeAte()
@@ -180,22 +227,30 @@ public class Snake : MonoBehaviour
 
     private void ChangeSnakeDirectionIfKeyPressed()
     {
-        if (Input.GetKey(KeyCode.LeftArrow))
+        // Get every key of direction dictionary and determinate if was pressed
+        foreach (var directionPair in directionDictionary)
         {
-            direction = new Vector3(-1, 0, 0);
+            if (Input.GetKeyDown(directionPair.Key))
+            {
+                Vector3 newDirection = directionPair.Value;
+                // If the new direction to which snake wants to move is the opposite direction
+                // then direction is not changed
+                direction =
+                    doesSnakeHaveTail() && isOppositeDirection(newDirection)
+                    ? direction // No change of direction
+                    : newDirection; // Change of direction
+            }
         }
-        if (Input.GetKey(KeyCode.RightArrow))
-        {
-            direction = new Vector3(1, 0, 0);
-        }
-        if (Input.GetKey(KeyCode.UpArrow))
-        {
-            direction = new Vector3(0, 1, 0);
-        }
-        if (Input.GetKey(KeyCode.DownArrow))
-        {
-            direction = new Vector3(0, -1, 0);
-        }
+    }
+
+    private bool isOppositeDirection(Vector3 newDirection)
+    {
+        return Vector3.zero.Equals((direction + newDirection));
+    }
+
+    private bool doesSnakeHaveTail()
+    {
+        return tail.Count > 0;
     }
 
     private void PlaceGameObject(GameObject gameObject, float x, float y)
