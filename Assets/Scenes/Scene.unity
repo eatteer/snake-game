@@ -162,8 +162,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 324f6ef22c6e14242ba1a091ad58ded2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapSizeX: 10
-  mapSizeY: 10
+  xSize: 10
+  ySize: 10
   headPrefab: {fileID: 6484189599777781762, guid: 26540b0236a4c9e4891359aaa6d61e3d, type: 3}
   tailPrefab: {fileID: 6484189599777781762, guid: 26540b0236a4c9e4891359aaa6d61e3d, type: 3}
   edgePrefab: {fileID: 6484189599777781762, guid: 26540b0236a4c9e4891359aaa6d61e3d, type: 3}

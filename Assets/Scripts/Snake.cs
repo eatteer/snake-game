@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class Snake : MonoBehaviour
 {
-    public int mapSizeX, mapSizeY;
+    public int xSize, ySize;
 
     public GameObject headPrefab;
     public GameObject tailPrefab;
@@ -70,15 +70,16 @@ public class Snake : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        isGameOver = DidSnakeCollidedEdge() || DidSnakeCollidedItself();
+        isGameOver = DidSnakeCollideEdge() || DidSnakeCollideItself();
         if (isGameOver)
         {
+            // Stop game
             Time.timeScale = 0;
             UIRestartButton.SetActive(true);
             UIGameoverText.SetActive(true);
         }
 
-        if (DidSnakeAte())
+        if (DidSnakeEat())
         {
             UIScoreText.GetComponent<Text>().text = $"Score: {++score}";
 
@@ -109,32 +110,32 @@ public class Snake : MonoBehaviour
 
     private void GenerateMap()
     {
-        for (int x = 0; x <= mapSizeX; x++)
+        for (int x = 0; x <= xSize; x++)
         {
-            float xAxis = x - (mapSizeX / 2);
-            float yAxis = mapSizeY / 2;
+            float xPoint = x - (xSize / 2);
+            float yPoint = ySize / 2;
 
             GameObject topEdge = Instantiate(edgePrefab);
-            PlaceGameObject(topEdge, xAxis, yAxis);
-            SetMaterial(topEdge, edgeMaterial);
+            topEdge.transform.position = new Vector3(xPoint, yPoint, 0);
+            topEdge.GetComponent<MeshRenderer>().material = edgeMaterial;
 
             GameObject bottomEdge = Instantiate(edgePrefab);
-            PlaceGameObject(bottomEdge, xAxis, -yAxis);
-            SetMaterial(bottomEdge, edgeMaterial);
+            bottomEdge.transform.position = new Vector3(xPoint, -yPoint, 0);
+            bottomEdge.GetComponent<MeshRenderer>().material = edgeMaterial;
         }
 
-        for (int y = 0; y <= mapSizeY; y++)
+        for (int y = 0; y <= ySize; y++)
         {
-            float xAxis = mapSizeX / 2;
-            float yAxis = y - (mapSizeY / 2);
+            float xPoint = xSize / 2;
+            float yPoint = y - (ySize / 2);
 
             GameObject leftEdge = Instantiate(edgePrefab);
-            PlaceGameObject(leftEdge, -xAxis, yAxis);
-            SetMaterial(leftEdge, edgeMaterial);
+            leftEdge.transform.position = new Vector3(-xPoint, yPoint, 0);
+            leftEdge.GetComponent<MeshRenderer>().material = edgeMaterial;
 
             GameObject rightEdge = Instantiate(edgePrefab);
-            PlaceGameObject(rightEdge, xAxis, yAxis);
-            SetMaterial(rightEdge, edgeMaterial);
+            rightEdge.transform.position = new Vector3(xPoint, yPoint, 0);
+            rightEdge.GetComponent<MeshRenderer>().material = edgeMaterial;
         }
     }
 
@@ -142,8 +143,8 @@ public class Snake : MonoBehaviour
     {
         // Config head
         head = Instantiate(headPrefab);
-        PlaceGameObject(head, 0, 0);
-        SetMaterial(head, headMaterial);
+        head.transform.position = new Vector3(0, 0, 0);
+        head.GetComponent<MeshRenderer>().material = headMaterial;
 
         // Config empty tail
         tail = new List<GameObject>();
@@ -153,69 +154,69 @@ public class Snake : MonoBehaviour
     {
         // Generate random positions for the food until one doesn't collide with the snake
         Vector3 position;
-        bool didCollided = false;
+        bool didCollide = false;
         do
         {
             position = generateRandomPositionWithinMap();
 
             foreach (GameObject tailFragment in tail)
             {
-                didCollided = position.Equals(tailFragment.transform.position);
-                if (didCollided) break;
+                didCollide = position.Equals(tailFragment.transform.position);
+                if (didCollide) break;
             }
 
-        } while (didCollided);
+        } while (didCollide);
 
 
         // Config food
         food = Instantiate(foodPrefab);
         food.transform.position = position;
-        SetMaterial(food, foodMaterial);
+        food.GetComponent<MeshRenderer>().material = foodMaterial;
     }
 
     private Vector3 generateRandomPositionWithinMap()
     {
         System.Random random = new System.Random();
-        int x = random.Next(((mapSizeX / 2) - 1) * -1, (mapSizeX / 2 - 1));
-        int y = random.Next(((mapSizeY / 2) - 1) * -1, (mapSizeY / 2 - 1));
+        int x = random.Next(((xSize / 2) - 1) * -1, (xSize / 2 - 1));
+        int y = random.Next(((ySize / 2) - 1) * -1, (ySize / 2 - 1));
 
         Vector3 position = new Vector3(x, y, 0);
         return position;
     }
 
-    private bool DidSnakeCollidedEdge()
+    private bool DidSnakeCollideEdge()
     {
-        int leftEdge = (mapSizeX / 2) * -1;
-        int rightEdge = mapSizeX / 2;
-        int topEdge = mapSizeY / 2;
-        int bottomEdge = (mapSizeY / 2) * -1;
+        int leftEdge = (xSize / 2) * -1;
+        int rightEdge = xSize / 2;
+        int topEdge = ySize / 2;
+        int bottomEdge = (ySize / 2) * -1;
 
         Vector3 snakePosition = head.transform.position;
 
-        bool didCollided = snakePosition.x == leftEdge || snakePosition.x == rightEdge || snakePosition.y == bottomEdge || snakePosition.y == topEdge;
-        return didCollided;
+        bool didCollide = snakePosition.x == leftEdge || snakePosition.x == rightEdge || snakePosition.y == bottomEdge || snakePosition.y == topEdge;
+        return didCollide;
     }
 
-    private bool DidSnakeCollidedItself()
+    private bool DidSnakeCollideItself()
     {
-        bool didCollided = false;
+        bool didCollide = false;
 
         foreach (GameObject tailFragment in tail)
         {
-            didCollided = tailFragment.transform.position.Equals(head.transform.position);
-            if (didCollided) break;
+            didCollide = tailFragment.transform.position.Equals(head.transform.position);
+            if (didCollide) break;
         }
 
-        return didCollided;
+        return didCollide;
     }
 
-    private bool DidSnakeAte()
+    private bool DidSnakeEat()
     {
         Vector3 snakePosition = head.transform.position;
         Vector3 foodPosition = food.transform.position;
 
-        bool didAte = snakePosition.Equals(foodPosition);
-        return didAte;
+        bool didEat = snakePosition.Equals(foodPosition);
+        return didEat;
     }
 
     private void GenerateTailFragment()
@@ -247,7 +248,7 @@ public class Snake : MonoBehaviour
 
         // Set different material if the tail fragment to be added is odd or even
         Material tailMaterial = tail.Count % 2 != 0 ? tailSecondaryMaterial : tailPrimaryMaterial;
-        SetMaterial(tailFragment, tailMaterial);
+        tailFragment.GetComponent<MeshRenderer>().material = tailMaterial;
         tail.Add(tailFragment);
     }
 
@@ -277,15 +278,5 @@ public class Snake : MonoBehaviour
     private bool doesSnakeHaveTail()
     {
         return tail.Count > 0;
-    }
-
-    private void PlaceGameObject(GameObject gameObject, float x, float y)
-    {
-        gameObject.GetComponent<Transform>().position = new Vector3(x, y, 0);
-    }
-
-    private void SetMaterial(GameObject gameObject, Material material)
-    {
-        gameObject.GetComponent<MeshRenderer>().material = material;
     }
 }
